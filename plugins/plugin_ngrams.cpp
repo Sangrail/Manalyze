@@ -177,6 +177,11 @@ class NGramPlugin : public IPlugin
 			res->add_information(s.first, ssInfo.str());			
 		}
 
+		//Todo: save to file
+		bigram_map_t overlayBiGram;
+		auto overlayRawbytes = pe.get_overlay().get()->get_raw_data();
+
+
         return res;
     }
 };

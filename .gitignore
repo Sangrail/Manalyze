@@ -77,3 +77,6 @@ external/
 # Signing script
 bin/sign_all.bat
 *.db
+/bin/bigram_.text.csv
+/bin/bigram_.rsrc.csv
+/bin/bigram_.reloc.csv
