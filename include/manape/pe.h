@@ -40,6 +40,7 @@
 #include "manape/utils.h"
 #include "manape/resources.h"			// Definition of the Resource class
 #include "manape/section.h"				// Definition of the Section class
+#include "manape/overlay.h"				// Definition of the Overlay class
 #include "manape/imported_library.h"	// Definition of the ImportedLibrary class
 #include "manape/color.h"				// Colored output if available
 
@@ -72,6 +73,7 @@ typedef boost::shared_ptr<const std::vector<pwin_certificate> > shared_certifica
 typedef boost::shared_ptr<const std::vector<pImportedLibrary> > shared_imports;
 typedef boost::shared_ptr<std::string> pString;
 typedef boost::shared_ptr<FILE> pFile;
+typedef boost::shared_ptr<Overlay> shared_overlay;
 
 class PE
 {
@@ -201,6 +203,10 @@ public:
 		return (_initialized) ? boost::make_shared<std::vector<pImportedLibrary> >(_imports) : shared_imports();
 	}
 
+	DECLSPEC shared_overlay get_overlay() const {
+		return (_initialized && _overlay) ? boost::make_shared<Overlay>(*_overlay) : shared_overlay();
+	}
+
 	/**
 	 *	@brief	Extracts the resources of the PE and writes them to the disk.
 	 *
@@ -237,6 +243,15 @@ public:
 	 */
 	DECLSPEC bool is_valid()	const {
 		return _initialized;
+	}
+
+	/**
+	*	@brief	Tells whether the PE is signed.
+	*
+	*	@return	True if the PE is signed correctly, false otherwise.
+	*/
+	DECLSPEC bool is_signed() const {
+		return _isSigned;
 	}
 
 	/**
@@ -428,6 +443,11 @@ private:
 	 */
 	bool _read_image_resource_directory(image_resource_directory& dir, unsigned int offset = 0) const;
 
+	/**
+	*	@brief	Parse the overlay.	
+	*/
+	void _parse_overlay();
+
 	std::string							_path;
     bool								_initialized;
 	boost::uint64_t						_file_size;
@@ -455,6 +475,8 @@ private:
 	boost::optional<image_load_config_directory>	_config;
 	boost::optional<delay_load_directory_table>		_delay_load_directory_table;
 	std::vector<pwin_certificate>					_certificates;
+	bool											_isSigned;
+	boost::optional<Overlay>						_overlay;
 };
 
 

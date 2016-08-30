@@ -513,6 +513,15 @@ void dump_summary(const mana::PE& pe, io::OutputFormatter& formatter)
 		}
 	}
 
+	if (pe.get_overlay())
+	{
+		summary->append(boost::make_shared<io::OutputTreeNode>("Overlay Entropy", pe.get_overlay().get()->get_entropy()));
+	}
+	else
+	{
+		summary->append(boost::make_shared<io::OutputTreeNode>("Overlay", "None"));
+	}
+
 	formatter.add_data(summary, *pe.get_path());
 }
 

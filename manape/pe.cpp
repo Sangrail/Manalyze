@@ -20,7 +20,7 @@
 namespace mana {
 
 PE::PE(const std::string& path)
-	: _path(path), _initialized(false)
+	: _path(path), _initialized(false), _isSigned(false)
 {
 	FILE* f = fopen(_path.c_str(), "rb");
 	if (f == nullptr)
@@ -55,6 +55,7 @@ PE::PE(const std::string& path)
 	_initialized = true;
 	_parse_coff_symbols();
 	_parse_directories();
+	_parse_overlay();	
 }
 
 
@@ -895,6 +896,7 @@ bool PE::_parse_certificates()
 	if (!_ioh->directories[IMAGE_DIRECTORY_ENTRY_SECURITY].VirtualAddress ||		// In this case, "VirtualAddress" is actually a file offset.
 		fseek(_file_handle.get(), _ioh->directories[IMAGE_DIRECTORY_ENTRY_SECURITY].VirtualAddress, SEEK_SET))
 	{
+		_isSigned = false;
 		return true;	// Unsigned binary
 	}
 
@@ -949,9 +951,29 @@ bool PE::_parse_certificates()
 			fseek(_file_handle.get(), padding, SEEK_CUR);
 			remaining_bytes -= padding;
 		}
+
+		_isSigned = true;
 	}
 
 	return true;
+}
+
+// ----------------------------------------------------------------------------
+
+void PE::_parse_overlay()
+{
+	// Find the overlay - a naive approach, ignore overlapping sections and the signature if it's in the overlay
+
+	auto overlayOffset = _sections[0]->get_pointer_to_raw_data();
+
+	for (auto& s : _sections)
+	{
+		overlayOffset += s->get_size_of_raw_data();
+	}
+
+	Overlay overlay(_file_handle, _file_size, overlayOffset);
+
+	_overlay.reset(overlay);
 }
 
 } // !namespace mana
