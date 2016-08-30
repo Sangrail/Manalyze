@@ -80,3 +80,7 @@ bin/sign_all.bat
 /bin/bigram_.text.csv
 /bin/bigram_.rsrc.csv
 /bin/bigram_.reloc.csv
+/bin/bigram_DATA.csv
+/bin/bigram_CODE.csv
+/bin/bigram_.rdata.csv
+/bin/bigram_.idata.csv
