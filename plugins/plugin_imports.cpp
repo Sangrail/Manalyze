@@ -73,59 +73,6 @@ namespace plugin {
 			throw std::invalid_argument(ss.str());
 		}
 	}
-	/*
-	// IsDebuggerPresent has been removed from this list, because it gets referenced in ___scrt_fastfail which seems to be present in any PE.
-	// The presence of this function is therefore not meaningful of any particular intent.
-	std::string anti_debug =
-	"FindWindow|(Zw|Nt)QuerySystemInformation|DbgBreakPoint|DbgPrint|"
-	"CheckRemoteDebuggerPresent|CreateToolhelp32Snapshot|Toolhelp32ReadProcessMemory|"
-	"OutputDebugString|SwitchToThread|NtQueryInformationProcess"	// Standard anti-debug API calls
-	"QueryPerformanceCounter";	// Techniques based on timing. GetTickCount ignored (too many false positives)
-
-	std::string vanilla_injection = "VirtualAlloc.*|WriteProcessMemory|CreateRemoteThread(Ex)?|OpenProcess";
-
-	std::string keylogger_api = "SetWindowsHook(Ex)?|GetAsyncKeyState|GetForegroundWindow|AttachThreadInput|CallNextHook(Ex)?|MapVirtualKey";
-
-	std::string raw_socket_api = "accept|bind|connect|recv|send|gethost(by)?name|inet_addr";
-
-	std::string http_api = "Internet.*|URL(Download|Open).*|WinHttp.*";
-
-	std::string registry_api = "Reg.*(Key|Value).*|SH.*(Reg|Key).*|SHQueryValueEx(A|W)|SHGetValue(A|W)";
-
-	std::string process_creation_api = "CreateProcess.*|system|WinExec|ShellExecute(A|W)";
-
-	std::string process_manipulation_api = "EnumProcess.*|OpenProcess|ReadProcessMemory|Process32(First|Next)(W)?";
-
-	std::string service_manipulation_api = "OpenSCManager(A|W)|(Open|Control|Create|Delete)Service(A|W)?|QueryService.*|"
-	"ChangeServiceConfig(A|W)|EnumServicesStatus(Ex)?(A|W)";
-
-	std::string privilege_api = "AdjustTokenPrivileges|IsNTAdmin|LsaEnumerateLogonSessions|SamQueryInformationUser|"
-	"SamIGetPrivateData|SfcTerminateWatcherThread|(Zw)?OpenProcessToken(Ex)?|(Zw)?DuplicateToken(Ex)?|"
-	"(SHTest|Check)TokenMembership";
-
-	std::string dacl_api = "SetKernelObjectSecurity|SetFileSecurity(A|W)|SetNamedSecurityInfo(A|W)|SetSecurityInfo";
-
-	std::string dynamic_import = "(Co)?LoadLibrary(Ex)?(A|W)|GetProcAddress|LdrLoadDll|MmGetSystemRoutineAddress";
-
-	std::string packer_api = "VirtualAlloc|VirtualProtect";
-
-	std::string temporary_files = "GetTempPath(A|W)|(Create|Write)File(A|W)";
-
-	std::string hdd_enumeration = "GetVolumeInformation(ByHandle)?(A|W)|GetDriveType(A|W)|GetLogicalDriveStrings(A|W)";
-
-	std::string driver_enumeration = "EnumDeviceDrivers|GetDeviceDriver.*";
-
-	std::string eventlog_deletion = "EvtClearLog|ClearEventLog(A|W)";
-
-	std::string screenshot_api = "CreateCompatibleDC|GetDC(Ex)?|FindWindow|PrintWindow|BitBlt";
-
-	std::string audio_api = "waveInOpen|DirectSoundCaptureCreate.*";
-
-	std::string shutdown_functions = "Initiate(System)?Shutdown(Ex)?(A|W)|LockWorkStation|ExitWindows(Ex)?";
-
-	std::string networking_api = "(Un)?EnableRouter|SetAdapterIpAddress|SetIp(Forward|Net|Statistics|TTL).*|SetPerTcp(6)?ConnectionEStats";
-	*/
-
 	/**
 	*	@brief	Checks the presence of some functions in the PE and updates the
 	*			result accordingly.
