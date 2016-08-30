@@ -84,4 +84,3 @@ bin/sign_all.bat
 /bin/bigram_CODE.csv
 /bin/bigram_.rdata.csv
 /bin/bigram_.idata.csv
-*.conf
