@@ -88,45 +88,6 @@ class NGramPlugin : public IPlugin
         return boost::make_shared<std::string>("Extracts n-grams for the individual sections (currently 1 and 2-gram).");
     }
 
-	bigram_map_t CreateBiGram(shared_bytes rawbytes)
-	{
-		bigram_map_t biGram;
-
-		if (rawbytes.size() == 0)
-		{
-			std::stringstream ss;
-			ss << "Could not access raw bytes for: " << *section.get()->get_name();
-			PRINT_ERROR << ss.str() << '\n';
-			return biGram;
-		}
-		auto currentByte = std::begin(rawbytes);
-
-		while (true) {
-			auto nextByte = std::next(currentByte);
-
-			if (nextByte == std::end(rawbytes)) {
-				break;
-			}
-
-			auto bigram = std::make_tuple(*currentByte, *nextByte);
-
-			auto got = biGram.find(bigram);
-
-			if (got == biGram.end())
-			{
-				biGram.insert(std::make_pair(bigram, 1));
-			}
-			else
-			{
-				biGram[bigram]++;
-			}
-
-			currentByte = nextByte;
-		}
-
-		return biGram;
-	}
-
     pResult analyze(const mana::PE& pe) override
     {
         pResult res = create_result();
@@ -139,7 +100,9 @@ class NGramPlugin : public IPlugin
 
 		std::unordered_map<std::string, bigram_map_t> sectionBiGramMap;
 		for (auto it = sections->begin(); it != sections->end(); ++it)
-		{			
+		{
+			bigram_map_t sectionBiGram;
+
 			auto section = *it;
 
 			//TODO: Create 1-gram
@@ -148,7 +111,37 @@ class NGramPlugin : public IPlugin
 			//Create n-grams
 			auto rawbytes = *section.get()->get_raw_data();
 
-			auto sectionBiGram = CreateBiGram(rawbytes);
+			if (rawbytes.size()==0)
+			{
+				std::stringstream ss;
+				ss << "Could not access raw bytes for: " << *section.get()->get_name();
+				PRINT_ERROR << ss.str() << '\n';
+				continue;
+			}
+			auto currentByte = std::begin(rawbytes);
+
+			while (true) {
+				auto nextByte = std::next(currentByte);
+
+				if (nextByte == std::end(rawbytes)) {
+					break;
+				}
+
+				auto bigram = std::make_tuple(*currentByte, *nextByte);
+
+				auto got = sectionBiGram.find(bigram);
+
+				if (got == sectionBiGram.end())
+				{
+					sectionBiGram.insert(std::make_pair(bigram, 1));
+				}
+				else
+				{
+					sectionBiGram[bigram]++;
+				}
+
+				currentByte = nextByte;
+			}
 
 			sectionBiGramMap.insert(std::make_pair(*section.get()->get_name(), sectionBiGram));
 		}
