@@ -515,7 +515,7 @@ void dump_summary(const mana::PE& pe, io::OutputFormatter& formatter)
 
 	if (pe.get_overlay())
 	{
-		summary->append(boost::make_shared<io::OutputTreeNode>("Overlay Entropy", pe.get_overlay().get()->get_entropy()));
+		summary->append(boost::make_shared<io::OutputTreeNode>("Overlay", "Yes"));
 	}
 	else
 	{

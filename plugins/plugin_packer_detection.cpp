@@ -51,6 +51,49 @@ const std::map<std::string, std::string> KNOWN_PACKER_SECTIONS =
 
 class PackerDetectionPlugin : public IPlugin
 {
+private:
+	double getOverlayEntropyThreshold()
+	{
+		double min_overlay_entropy = 7.0f;
+
+		if (_config == nullptr || !_config->count("min_overlay_entropy")) {
+			min_overlay_entropy = 7.0f;
+		}
+		else
+		{
+			try {
+				min_overlay_entropy = std::stod(_config->at("min_overlay_entropy"));
+			}
+			catch (std::invalid_argument)
+			{
+				PRINT_WARNING << "Could not parse packer.min_overlay_entropy in the configuration file." << std::endl;
+				min_overlay_entropy = 7.0f;
+			}
+		}
+
+		return min_overlay_entropy;
+	}
+
+	int getMinImportsThreshold()
+	{
+		unsigned int min_imports;
+		if (_config == nullptr || !_config->count("min_imports")) {
+			min_imports = 10;
+		}
+		else
+		{
+			try {
+				min_imports = std::stoi(_config->at("min_imports"));
+			}
+			catch (std::invalid_argument)
+			{
+				PRINT_WARNING << "Could not parse packer.min_imports in the configuration file." << std::endl;
+				min_imports = 10;
+			}
+		}
+
+		return min_imports;
+	}
 public:
 	int get_api_version() const override { return 1; }
 
@@ -65,6 +108,20 @@ public:
 	pResult analyze(const mana::PE& pe) override
 	{
 		pResult res = create_result();
+
+		// Analyse the overlay		
+		mana::shared_overlay overlay = pe.get_overlay();
+		auto overlayEntropy = (*overlay).get_entropy();
+
+		auto min_overlay_entropy = getOverlayEntropyThreshold();
+
+		if (overlayEntropy > min_overlay_entropy)
+		{
+			std::stringstream ss;
+			ss << "The PE has an overlay with an entropy of " << overlayEntropy << " located at 0x" << std::hex << (*overlay).get_pointer_to_raw_data() << "( the threshold is " << min_overlay_entropy << ")\n";
+			res->add_information(ss.str());
+			res->raise_level(SUSPICIOUS);
+		}
 
 		// Analyze sections
 		mana::shared_sections sections = pe.get_sections();
@@ -130,21 +187,7 @@ public:
 		}
 
 		// Read the minimum import number from the configuration
-		unsigned int min_imports;
-		if (_config == nullptr || !_config->count("min_imports")) {
-			min_imports = 10;
-		}
-		else
-        {
-			try {
-				min_imports = std::stoi(_config->at("min_imports"));
-			}
-			catch (std::invalid_argument)
-            {
-                PRINT_WARNING << "Could not parse packer.min_imports in the configuration file." << std::endl;
-				min_imports = 10;
-			}
-		}
+		auto min_imports = getMinImportsThreshold();
 
 		if (imports->size() < min_imports)
 		{
