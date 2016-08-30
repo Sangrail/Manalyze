@@ -76,3 +76,4 @@ external/
 
 # Signing script
 bin/sign_all.bat
+*.db
