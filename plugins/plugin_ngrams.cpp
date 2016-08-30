@@ -177,18 +177,6 @@ class NGramPlugin : public IPlugin
 			res->add_information(s.first, ssInfo.str());			
 		}
 
-		
-
-		//auto rawbytes = pe.get_raw_data(32);
-		//PRINT_INFO << "Top 32 bytes: ";
-		//std::stringstream ss;
-		//for (auto const &b : *rawbytes)
-		//{
-		//	ss << std::hex << (boost::uint8_t)b;
-		//}
-		//PRINT_INFO << ss.str();
-		//PRINT_INFO << "\n";
-
         return res;
     }
 };
