@@ -74,6 +74,9 @@ namespace plugin {
 
 	typedef std::unordered_map<key_t, boost::uint64_t, key_hash, key_equal> bigram_map_t;
 	bigram_map_t bigram_map;
+
+	typedef std::unordered_map<boost::uint8_t, boost::uint64_t> unigram_map_t;
+	unigram_map_t unigram_map;
 	
 
 class NGramPlugin : public IPlugin
@@ -87,9 +90,129 @@ class NGramPlugin : public IPlugin
     pString get_description() const override {
         return boost::make_shared<std::string>("Extracts n-grams for the individual sections (currently 1 and 2-gram).");
     }
+	
+	bigram_map_t GenerateBiGram(mana::shared_bytes rawbytes)
+	{
+		bigram_map_t biGram;
+
+		if ((*rawbytes).size() == 0)
+		{
+			std::stringstream ss;
+			ss << "Could not access raw bytes";
+			PRINT_ERROR << ss.str() << '\n';
+			return biGram;
+		}
+
+		auto currentByte = std::begin(*rawbytes);
+
+		while (true) {
+			auto nextByte = std::next(currentByte);
+
+			if (nextByte == std::end(*rawbytes)) {
+				break;
+			}
+
+			auto bigram = std::make_tuple(*currentByte, *nextByte);
+
+			auto got = biGram.find(bigram);
+
+			if (got == biGram.end())
+			{
+				biGram.insert(std::make_pair(bigram, 1));
+			}
+			else
+			{
+				biGram[bigram]++;
+			}
+
+			currentByte = nextByte;
+		}
+
+		return biGram;
+	}
+
+	unigram_map_t GenerateUniGram(mana::shared_bytes rawbytes)
+	{
+		unigram_map_t UniGram;
+
+		if ((*rawbytes).size() == 0)
+		{
+			std::stringstream ss;
+			ss << "Could not access raw bytes";
+			PRINT_ERROR << ss.str() << '\n';
+			return UniGram;
+		}
+
+		auto currentByte = std::begin(*rawbytes);
+
+		while (true) {
+			auto nextByte = std::next(currentByte);
+
+			if (nextByte == std::end(*rawbytes)) {
+				break;
+			}
+
+			auto got = UniGram.find(*currentByte);
+
+			if (got == UniGram.end())
+			{
+				UniGram.insert(std::make_pair(*currentByte, 1));
+			}
+			else
+			{
+				UniGram[*currentByte]++;
+			}
+
+			currentByte = nextByte;
+		}
+
+		return UniGram;
+	}
+
+	void CreateUnigramFile(std::string filename, unigram_map_t unigramMap)
+	{
+		if (unigramMap.size() == 0)
+			return;
+
+		std::ofstream unigram(filename);
+
+		unigram << "Byte_hex,First_dec,Count" << std::endl;
+
+		for (auto& entry : unigramMap) {
+
+			auto b = entry.first;
+			auto count = entry.second;
+
+			unigram << hex(b) << "," << dec(b) << "," << std::dec << count << "\n";
+		}
+
+		unigram.close();
+	}
+
+	void CreateBigramFile(std::string filename, bigram_map_t bigramMap)
+	{
+		if (bigramMap.size() == 0)
+			return;
+
+		std::ofstream bigram(filename);
+
+		bigram << "FirstByte_hex,SecondByte_hex,FirstByte_dec,SecondByte_dec,Count" << std::endl;
+
+		for (auto& entry : bigramMap) {
+
+			auto tup = entry.first;
+			auto count = entry.second;
+
+			bigram << hex(std::get<0>(tup)) << "," << hex(std::get<1>(tup)) << "," << dec(std::get<0>(tup)) << "," << dec(std::get<1>(tup)) << "," << std::dec << count << "\n";
+		}
+
+		bigram.close();
+	}
 
     pResult analyze(const mana::PE& pe) override
     {
+		auto outputDir = _config->at("outputfolder");
+
         pResult res = create_result();
        
 		mana::shared_sections sections = pe.get_sections();
@@ -99,89 +222,68 @@ class NGramPlugin : public IPlugin
 		}
 
 		std::unordered_map<std::string, bigram_map_t> sectionBiGramMap;
+
+		std::unordered_map<std::string, unigram_map_t> sectionUniGramMap;
+
 		for (auto it = sections->begin(); it != sections->end(); ++it)
 		{
-			bigram_map_t sectionBiGram;
-
 			auto section = *it;
 
-			//TODO: Create 1-gram
+			//Create 1-gram
+			auto sectionUniGram = GenerateUniGram(section.get()->get_raw_data());
+			sectionUniGramMap.insert(std::make_pair(*section.get()->get_name(), sectionUniGram));
 
-
-			//Create n-grams
-			auto rawbytes = *section.get()->get_raw_data();
-
-			if (rawbytes.size()==0)
-			{
-				std::stringstream ss;
-				ss << "Could not access raw bytes for: " << *section.get()->get_name();
-				PRINT_ERROR << ss.str() << '\n';
-				continue;
-			}
-			auto currentByte = std::begin(rawbytes);
-
-			while (true) {
-				auto nextByte = std::next(currentByte);
-
-				if (nextByte == std::end(rawbytes)) {
-					break;
-				}
-
-				auto bigram = std::make_tuple(*currentByte, *nextByte);
-
-				auto got = sectionBiGram.find(bigram);
-
-				if (got == sectionBiGram.end())
-				{
-					sectionBiGram.insert(std::make_pair(bigram, 1));
-				}
-				else
-				{
-					sectionBiGram[bigram]++;
-				}
-
-				currentByte = nextByte;
-			}
-
+			//Create 2-grams			
+			auto sectionBiGram = GenerateBiGram(section.get()->get_raw_data());
+			
 			sectionBiGramMap.insert(std::make_pair(*section.get()->get_name(), sectionBiGram));
 		}
 
-		boost::filesystem::path p(*pe.get_path());
+		for (auto& s : sectionUniGramMap) {
+
+			std::stringstream ss;
+
+			ss << outputDir << "\\unigram_" << s.first << ".csv";
+
+			std::ofstream unigram(ss.str());
+
+			CreateUnigramFile(ss.str(), s.second);
+
+			std::stringstream ssInfo;
+
+			ssInfo << "uni-grams calculated and saved to: " << ss.str();
+
+			res->add_information(s.first, ssInfo.str());
+		}
 
 		for (auto& s : sectionBiGramMap) { 
 
 			std::stringstream ss;
 
-			ss << "bigram_" << s.first << ".csv";
+			ss << outputDir << "\\bigram_" << s.first << ".csv";
 
-			std::ofstream bigram(ss.str());
-
-			bigram << "FirstByte_hex,SecondByte_hex,FirstByte_dec,SecondByte_dec,Count" << std::endl;
-
-			bigram_map_t bimap = s.second;
-
-			for (auto& entry : bimap) {
-
-				auto tup = entry.first;
-				auto count = entry.second;
-
-				bigram << hex(std::get<0>(tup)) << "," << hex(std::get<1>(tup)) << "," << dec(std::get<0>(tup)) << "," << dec(std::get<1>(tup)) << "," << std::dec << count << "\n";
-			}
-
-			bigram.close();
-
+			CreateBigramFile(ss.str(), s.second);
+			
 			std::stringstream ssInfo;
 
-			ssInfo << "n-grams calculated and saved to: "  << ss.str() ;
+			ssInfo << "bi-grams calculated and saved to: "  << ss.str() ;
 
 			res->add_information(s.first, ssInfo.str());			
 		}
 
-		//Todo: save to file
-		bigram_map_t overlayBiGram;
 		auto overlayRawbytes = pe.get_overlay().get()->get_raw_data();
 
+		auto overlayUniGram = GenerateUniGram(overlayRawbytes);			
+		auto overlayBiGram = GenerateBiGram(overlayRawbytes);		
 
+		std::stringstream ss2;
+		ss2 << outputDir << "\\unigram_Overlay.csv";
+		CreateUnigramFile(ss2.str(), overlayUniGram);
+
+		std::stringstream ss1;
+		ss1 << outputDir << "\\bigram_Overlay.csv";
+		CreateBigramFile(ss1.str(), overlayBiGram);
+	
         return res;
     }
 };
