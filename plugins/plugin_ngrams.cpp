@@ -240,21 +240,19 @@ class NGramPlugin : public IPlugin
 		{
 			for (int j = 0; j < 256; j++)
 			{
-				//std::cout << dec(i) << ", " << dec(j) << "\t";
-
 				auto p =std::make_tuple(i, j);
 
 				auto got = bigramMap.find(p);
 
 				if (got == bigramMap.end())
 				{
-					densitymap << "255 255 255\t";
+					densitymap << "255 255 255 ";
 				}
 				else
 				{
 					l_to_RGB.val = bigramMap[p];
 
-					densitymap << dec(l_to_RGB.rgbValue[0]) << " " << dec(l_to_RGB.rgbValue[1]) << " " << dec(l_to_RGB.rgbValue[2]) << "\t";
+					densitymap << dec(l_to_RGB.rgbValue[2]) << " " << dec(l_to_RGB.rgbValue[1]) << " " << dec(l_to_RGB.rgbValue[0]) << " ";
 				}
 			}
 
@@ -314,11 +312,11 @@ class NGramPlugin : public IPlugin
 
 		for (auto& s : sectionBiGramMap) { 
 
-			std::stringstream ss;
+			/*std::stringstream ss;
 
 			ss << outputDir << "\\bigram_" << s.first << ".csv";
 
-			CreateBigramFile(ss.str(), s.second);
+			CreateBigramFile(ss.str(), s.second);*/
 
 			std::stringstream ss2;
 			ss2 << outputDir << "\\bigram_"<< s.first <<"_density_map.pbm";
@@ -326,7 +324,7 @@ class NGramPlugin : public IPlugin
 			
 			std::stringstream ssInfo;
 
-			ssInfo << "bi-grams calculated and saved to: "  << ss.str() ;
+			ssInfo << "bi-grams calculated and saved to: "  << ss2.str() ;
 
 			res->add_information(s.first, ssInfo.str());			
 		}
@@ -340,9 +338,9 @@ class NGramPlugin : public IPlugin
 		ss1 << outputDir << "\\unigram_Overlay.csv";
 		CreateUnigramFile(ss1.str(), overlayUniGram);
 
-		std::stringstream ss2;
+		/*std::stringstream ss2;
 		ss2 << outputDir << "\\bigram_Overlay.csv";
-		CreateBigramFile(ss2.str(), overlayBiGram);
+		CreateBigramFile(ss2.str(), overlayBiGram);*/
 
 		std::stringstream ss3;
 		ss3 << outputDir << "\\bigram_Overlay_density_map.pbm";
