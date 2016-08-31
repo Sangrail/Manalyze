@@ -209,6 +209,62 @@ class NGramPlugin : public IPlugin
 		bigram.close();
 	}
 
+	union L_To_RGB {
+		uint32_t val;
+		uint8_t rgbValue[3];		
+	};
+
+	void CreateBiGramDensityMap(std::string filename, bigram_map_t bigramMap)
+	{
+		/*
+			P3
+			# feep.ppm
+			4 4
+			15
+			0  0  0    0  0  0    0  0  0   15  0 15
+			0  0  0    0 15  7    0  0  0    0  0  0
+			0  0  0    0  0  0    0 15  7    0  0  0
+			15  0 15    0  0  0    0  0  0    0  0  0
+		*/
+
+		if (bigramMap.size() == 0)
+			return;
+
+		std::ofstream densitymap(filename);
+
+		densitymap << "P3\n# densityMap.ppm\n256 256\n255\n";
+
+		L_To_RGB l_to_RGB;
+
+		for (int i = 0; i < 256; i++)
+		{
+			for (int j = 0; j < 256; j++)
+			{
+				//std::cout << dec(i) << ", " << dec(j) << "\t";
+
+				auto p =std::make_tuple(i, j);
+
+				auto got = bigramMap.find(p);
+
+				if (got == bigramMap.end())
+				{
+					densitymap << "255 255 255\t";
+				}
+				else
+				{
+					l_to_RGB.val = bigramMap[p];
+
+					densitymap << dec(l_to_RGB.rgbValue[0]) << " " << dec(l_to_RGB.rgbValue[1]) << " " << dec(l_to_RGB.rgbValue[2]) << "\t";
+				}
+			}
+
+			densitymap << '\n';
+		}
+		densitymap << '\n';
+
+		densitymap.close();
+	}
+
     pResult analyze(const mana::PE& pe) override
     {
 		auto outputDir = _config->at("outputfolder");
@@ -263,6 +319,10 @@ class NGramPlugin : public IPlugin
 			ss << outputDir << "\\bigram_" << s.first << ".csv";
 
 			CreateBigramFile(ss.str(), s.second);
+
+			std::stringstream ss2;
+			ss2 << outputDir << "\\bigram_"<< s.first <<"_density_map.pbm";
+			CreateBiGramDensityMap(ss2.str(), s.second);
 			
 			std::stringstream ssInfo;
 
@@ -276,13 +336,17 @@ class NGramPlugin : public IPlugin
 		auto overlayUniGram = GenerateUniGram(overlayRawbytes);			
 		auto overlayBiGram = GenerateBiGram(overlayRawbytes);		
 
-		std::stringstream ss2;
-		ss2 << outputDir << "\\unigram_Overlay.csv";
-		CreateUnigramFile(ss2.str(), overlayUniGram);
-
 		std::stringstream ss1;
-		ss1 << outputDir << "\\bigram_Overlay.csv";
-		CreateBigramFile(ss1.str(), overlayBiGram);
+		ss1 << outputDir << "\\unigram_Overlay.csv";
+		CreateUnigramFile(ss1.str(), overlayUniGram);
+
+		std::stringstream ss2;
+		ss2 << outputDir << "\\bigram_Overlay.csv";
+		CreateBigramFile(ss2.str(), overlayBiGram);
+
+		std::stringstream ss3;
+		ss3 << outputDir << "\\bigram_Overlay_density_map.pbm";
+		CreateBiGramDensityMap(ss3.str(), overlayBiGram);
 	
         return res;
     }
