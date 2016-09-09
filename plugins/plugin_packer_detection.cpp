@@ -118,7 +118,7 @@ public:
 		if (overlayEntropy > min_overlay_entropy)
 		{
 			std::stringstream ss;
-			ss << "The PE has an overlay with an entropy of " << overlayEntropy << " located at 0x" << std::hex << (*overlay).get_pointer_to_raw_data() << " ( the threshold is " << min_overlay_entropy << ")\n";
+			ss << "The PE has an overlay with an entropy of " << overlayEntropy << " located at 0x" << std::hex << (*overlay).get_pointer_to_raw_data() << " ( the threshold is " << min_overlay_entropy << " )\n";
 			res->add_information(ss.str());
 			res->raise_level(SUSPICIOUS);
 		}
